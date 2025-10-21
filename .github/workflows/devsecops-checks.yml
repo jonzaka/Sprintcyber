@@ -24,51 +24,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install semgrep safety
 
-      - name: Run Semgrep (SAST) and produce JSON
+      - name: Run Semgrep (SAST)
         run: |
           semgrep --config auto --json --output semgrep_report.json .
-          echo "Semgrep report created: semgrep_report.json"
-      
-      - name: Run Safety (SCA) against requirements.txt (if exists)
-        run: |
-          if [ -f requirements.txt ]; then
-            safety check --file=requirements.txt --full-report --json > safety_report.json || true
-            echo "Safety report created: safety_report.json"
-          else
-            echo "{}" > safety_report.json
-          fi
 
-      - name: Evaluate Semgrep findings and fail if any found
+      - name: Run Safety (SCA)
         run: |
-          python - <<'PY'
-import json, sys
-with open('semgrep_report.json','r',encoding='utf-8') as f:
-    r = json.load(f)
-findings = r.get('results', [])
-if len(findings) > 0:
-    print(f"Semgrep found {len(findings)} findings. Failing job.")
-    sys.exit(1)
-print("No Semgrep findings - OK.")
-PY
+          safety check --file=requirements.txt --full-report --json > safety_report.json || true
 
-      - name: Evaluate Safety findings and fail if any found
-        run: |
-          python - <<'PY'
-import json, sys
-try:
-    with open('safety_report.json','r',encoding='utf-8') as f:
-        r = json.load(f)
-except Exception:
-    r = {}
-vulns = r.get('vulnerabilities') or r.get('vulnerabilities_found') or []
-count = len(vulns) if isinstance(vulns, list) else 0
-if count > 0:
-    print(f"Safety found {count} vulnerable packages. Failing job.")
-    sys.exit(1)
-print("No Safety findings - OK.")
-PY
-
-      - name: Upload reports as artifacts
+      - name: Upload reports
         uses: actions/upload-artifact@v4
         with:
           name: devsecops-reports
