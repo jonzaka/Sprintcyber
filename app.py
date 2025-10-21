@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, make_response
 import jwt, datetime
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'trocar_por_seguro_em_prod'
+app.config['SECRET_KEY'] = 'sesdadqweas12312@@@#1234'
 
 @app.route('/login', methods=['POST'])
 def login():
